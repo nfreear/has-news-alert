@@ -1,0 +1,47 @@
+{
+  "private": true,
+  "name": "has-news-alert",
+  "version": "1.0.0",
+  "description": "If any RSS feed items are less than `alertOnLessThan` old, then 'FAIL' | © Nick Freear, 19-June-2019.",
+  "homepage": "https://nick.freear.org.uk",
+  "license": "UNLICENSED",
+  "author": "Nick Freear {@nfreear",
+  "engines": { "node": ">= 8" },
+  "dependencies": {
+    "datejs": "^1.0.0-rc3",
+    "request": "^2.87.0",
+    "request-promise": "^4.2.2",
+    "rss-parser": "^3.4.0"
+  },
+  "devDependencies": {
+    "semistandard": "^12.0.1"
+  },
+  "scripts": {
+    "has-news-alert": "./cli.js",
+    "fix": "semistandard --fix",
+    "test": "semistandard"
+  },
+  "repository": "https://github.com/nfreear/news-alerts.git",
+  "keywords": [],
+  "eslintConfig": {
+    "extends": "semistandard",
+    "parserOptions": {
+      "ecmaVersion": 7
+    },
+    "rules": {
+      "require-await": "error"
+    }
+  },
+  "semistandard": {
+    "exclude": []
+  },
+  "x-hasNewsAlertConfig": {
+    "alertOnLessThan": "20 days",
+    "runOnTravisCI": true,
+    "feedUrls": [
+      "http://www.open.ac.uk/blogs/CALRG/?feed=rss2",
+      "http://www.headstar.com/eablive/?feed=rss2",
+      "https://nick.freear.org.uk/feed.xml"
+    ]
+  }
+}
