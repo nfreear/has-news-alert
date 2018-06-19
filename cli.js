@@ -1,17 +1,16 @@
 #!/usr/bin/env node
 
 /*!
-  has-news-alert.js
+  has-news-alert
 
   If any items in the RSS feeds are less than `alertOnLessThan` old, exit with a non-zero value.
 
   © Nick Freear, 19-June-2019.
+  License: MIT
 */
 
-const Parser = require('rss-parser');
-/* const Date = */ require('datejs'); // Modifies the Date object! (https://github.com/abritinthebay/datejs/blob/master/index.js#L18)
-const timeago = require('timeago.js');
-const requestPromise = require('request-promise');
+const hasNewsAlert = require('./index');
+const notifier = require('node-notifier');
 const PKG = require('./package.json');
 const OPT = PKG[ 'x-hasNewsAlertConfig' ];
 const URLS = OPT.feedUrls;
@@ -23,53 +22,48 @@ const DATE_COMPARE = Date.parse('-' + OPT.alertOnLessThan);
 // let Parser = require('rss-parser');
 
 console.warn('has-news-alert URLs:', URLS);
-console.warn('HTTPS proxy:', process.env.https_proxy);
 console.warn('Date compare:', DATE_COMPARE, ',', OPT.alertOnLessThan);
+console.warn('HTTPS proxy:', process.env.https_proxy);
+console.warn('Travis event type:', process.env.TRAVIS_EVENT_TYPE);
 
 var newsAlerts = [];
-var promises = [];
 
-for (var idx = 0; idx < URLS.length; idx++) {
-  var promise = requestPromise({
-    proxy: process.env.https_proxy ? 'http://wwwcache.open.ac.uk:80' : null,
-    url: URLS[ idx ],
-    resolveWithFullResponse: true,
-    simple: true // Non-200 status codes fail!
-  }).then(function (resp) {
-    console.warn(resp.statusCode);
+var promises = hasNewsAlert(OPT, URLS, function (err, feed) {
+  if (err) {
+    console.error('Error:', err);
 
-    if (/* !err && */ resp.statusCode === 200) {
-      const parser = new Parser();
-      parser.parseString(resp.body).then(function (feed) {
-        console.warn('Feed:', feed.title, ',', feed.link);
+    process.exit(254);
+  }
 
-        feed.items.forEach(function (item) {
-          var result = Date.compare(DATE_COMPARE, Date.parse(item.isoDate));
-
-          if (result === -1) {
-            var timeAgo = (timeago()).format(item.isoDate);
-
-            newsAlerts.push({ url: URLS[ idx ], item: item, timeAgo: timeAgo });
-
-            console.warn('Alert:', item.title, ',', timeAgo, ',', item.link);
-          }
-        });
-      });
-    }
-  }).catch(function (reason) {
-    console.error('Error:', reason);
+  console.warn('Feed:', feed.title, ',', feed.url, ',', feed.statusCode);
+}, function (err, alert) {
+  if (err) {
+    console.error('Error:', err);
 
     process.exit(255);
-  });
+  }
 
-  promises.push(promise);
-}
+  newsAlerts.push(alert);
+
+  // https://en.wikibooks.org/wiki/Unicode/List_of_useful_symbols#Geometry
+  console.warn(' ∟ Alert:', alert.title, ',', alert.timeAgo, ',', alert.url);
+
+  if (!process.env.TRAVIS) {
+    notifier.notify({ title: alert.title, message: alert.timeAgo, url: alert.url, date: alert.date, icon: null, sound: true, wait: true });
+  }
+});
+
+notifier.on('click', function (obj, options) {
+  console.warn('Notify:', options);
+});
 
 Promise.all(promises).then(function () {
-  console.warn('Alerts count:', newsAlerts.length);
+  console.warn('Alert count:', newsAlerts.length);
   console.warn('Exit code:', newsAlerts.length);
 
-  process.exit(newsAlerts.length);
+  setTimeout(function () {
+    process.exit(newsAlerts.length);
+  }, process.env.TRAVIS ? 0 : 3000);
 });
 
 // End.

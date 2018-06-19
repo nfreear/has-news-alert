@@ -4,13 +4,15 @@
   "version": "1.0.0",
   "description": "If any RSS feed items are less than `alertOnLessThan` old, then 'FAIL' | © Nick Freear, 19-June-2019.",
   "homepage": "https://nick.freear.org.uk",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "author": "Nick Freear {@nfreear",
+  "main": "index.js",
   "engines": {
     "node": ">= 8"
   },
   "dependencies": {
     "datejs": "^1.0.0-rc3",
+    "node-notifier": "^5.2.1",
     "request": "^2.87.0",
     "request-promise": "^4.2.2",
     "rss-parser": "^3.4.0",
@@ -39,11 +41,12 @@
     "exclude": []
   },
   "x-hasNewsAlertConfig": {
-    "alertOnLessThan": "3 days",
+    "alertOnLessThan": "20 days",
     "runOnTravisCI": true,
     "feedUrls": [
       "http://www.open.ac.uk/blogs/CALRG/?feed=rss2",
       "http://www.headstar.com/eablive/?feed=rss2",
+      "http://www.headstar.com/eablive/?feed=rss2&post_type=eab_bulletin",
       "https://nick.freear.org.uk/feed.xml"
     ]
   }
